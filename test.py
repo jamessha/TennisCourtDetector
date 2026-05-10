@@ -11,6 +11,10 @@ from tracknet import BallTrackerNet
 import argparse
 import torch
 from utils import choose_device
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATA_ROOT = REPO_ROOT / 'calib_model_data' / 'courtside_data'
 
 if __name__ == '__main__':
 
@@ -19,7 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, help='path to model')
     parser.add_argument('--use_refine_kps', action='store_true', help='whether to use refine kps postprocessing')
     parser.add_argument('--use_homography', action='store_true', help='whether to use homography postprocessing')
-    parser.add_argument('--data_root', type=str, default='./data', help='dataset root containing images and data_val.json')
+    parser.add_argument('--data_root', type=str, default=str(DEFAULT_DATA_ROOT), help='dataset root containing images and data_val.json')
     parser.add_argument('--device', type=str, default='auto', help='auto, cpu, cuda, mps, or a torch device string')
     args = parser.parse_args()
     device = choose_device(args.device)

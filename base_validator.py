@@ -8,6 +8,10 @@ from tracknet import BallTrackerNet
 import argparse
 import torch.nn as nn
 from utils import choose_device
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATA_ROOT = REPO_ROOT / 'calib_model_data' / 'courtside_data'
 
 def val(model, val_loader, criterion, device, epoch):
     model.eval()
@@ -58,7 +62,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=2, help='batch size')
     parser.add_argument('--model_path', type=str, help='path to pretrained model')
-    parser.add_argument('--data_root', type=str, default='./data', help='dataset root containing images and data_val.json')
+    parser.add_argument('--data_root', type=str, default=str(DEFAULT_DATA_ROOT), help='dataset root containing images and data_val.json')
     parser.add_argument('--device', type=str, default='auto', help='auto, cpu, cuda, mps, or a torch device string')
     args = parser.parse_args()
     device = choose_device(args.device)
@@ -78,6 +82,5 @@ if __name__ == '__main__':
     criterion = nn.MSELoss()
 
     val_loss, tp, fp, fn, tn, precision, accuracy = val(model, val_loader, criterion, device, -1)
-
 
 

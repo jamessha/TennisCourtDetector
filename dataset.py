@@ -3,11 +3,14 @@ import os
 import cv2
 import numpy as np
 import json
+from pathlib import Path
 from utils import draw_umich_gaussian, line_intersection, is_point_in_image
+
+DEFAULT_DATA_ROOT = Path(__file__).resolve().parents[1] / 'calib_model_data' / 'courtside_data'
 
 class courtDataset(Dataset):
     
-    def __init__(self, mode, input_height=720, input_width=1280, scale=2, hp_radius=55, data_root='./data'):
+    def __init__(self, mode, input_height=720, input_width=1280, scale=2, hp_radius=55, data_root=DEFAULT_DATA_ROOT):
 
         self.mode = mode
         assert mode in ['train', 'val'], 'incorrect mode'
@@ -19,7 +22,7 @@ class courtDataset(Dataset):
         self.hp_radius = hp_radius
         self.scale = scale
 
-        self.path_dataset = data_root
+        self.path_dataset = str(data_root)
         self.path_images = os.path.join(self.path_dataset, 'images')
         with open(os.path.join(self.path_dataset, 'data_{}.json'.format(mode)), 'r') as f:
             self.data = json.load(f)
@@ -74,6 +77,5 @@ class courtDataset(Dataset):
     
     
         
-
 
 
