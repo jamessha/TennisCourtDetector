@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import torch.nn.functional as F
 from utils import is_point_in_image
 from scipy.spatial import distance
 from postprocess import postprocess
@@ -8,6 +7,7 @@ from dataset import courtDataset
 from tracknet import BallTrackerNet
 import argparse
 import torch.nn as nn
+from utils import choose_device
 
 def val(model, val_loader, criterion, device, epoch):
     model.eval()
@@ -20,9 +20,10 @@ def val(model, val_loader, criterion, device, epoch):
             out = model(batch[0].float().to(device))
             kps = batch[2]
             gt_hm = batch[1].float().to(device)
-            loss = criterion(F.sigmoid(out), gt_hm)
+            sigmoid_out = torch.sigmoid(out)
+            loss = criterion(sigmoid_out, gt_hm)
 
-            pred = F.sigmoid(out).detach().cpu().numpy()
+            pred = sigmoid_out.detach().cpu().numpy()
             for bs in range(batch_size):
                 for kps_num in range(14):
                     heatmap = (pred[bs][kps_num] * 255).astype(np.uint8)
@@ -57,26 +58,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=2, help='batch size')
     parser.add_argument('--model_path', type=str, help='path to pretrained model')
+    parser.add_argument('--data_root', type=str, default='./data', help='dataset root containing images and data_val.json')
+    parser.add_argument('--device', type=str, default='auto', help='auto, cpu, cuda, mps, or a torch device string')
     args = parser.parse_args()
+    device = choose_device(args.device)
 
-    val_dataset = courtDataset('val')
+    val_dataset = courtDataset('val', data_root=args.data_root)
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=1,
-        pin_memory=True
+        pin_memory=device.type == 'cuda'
     )
 
     model = BallTrackerNet(out_channels=15)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model.load_state_dict(torch.load(args.model_path, map_location=device))
     model = model.to(device)
     criterion = nn.MSELoss()
 
     val_loss, tp, fp, fn, tn, precision, accuracy = val(model, val_loader, criterion, device, -1)
-
-
 
 
 

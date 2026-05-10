@@ -2,10 +2,10 @@ import cv2
 import numpy as np
 import torch
 from tracknet import BallTrackerNet
-import torch.nn.functional as F
 from postprocess import postprocess, refine_kps
 from homography import get_trans_matrix, refer_kps
 import argparse
+from utils import choose_device
 
 if __name__ == '__main__':
 
@@ -15,10 +15,11 @@ if __name__ == '__main__':
     parser.add_argument('--output_path', type=str, help='path to output image')
     parser.add_argument('--use_refine_kps', action='store_true', help='whether to use refine kps postprocessing')
     parser.add_argument('--use_homography', action='store_true', help='whether to use homography postprocessing')
+    parser.add_argument('--device', type=str, default='auto', help='auto, cpu, cuda, mps, or a torch device string')
     args = parser.parse_args()
 
     model = BallTrackerNet(out_channels=15)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = choose_device(args.device)
     model = model.to(device)
     model.load_state_dict(torch.load(args.model_path, map_location=device))
     model.eval()
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     inp = inp.unsqueeze(0)
 
     out = model(inp.float().to(device))[0]
-    pred = F.sigmoid(out).detach().cpu().numpy()
+    pred = torch.sigmoid(out).detach().cpu().numpy()
 
     points = []
     for kps_num in range(14):

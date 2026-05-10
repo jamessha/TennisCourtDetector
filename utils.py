@@ -1,6 +1,7 @@
 import numpy as np
 from sympy import Line 
 import sympy
+import torch
 
 def gaussian2D(shape, sigma=1):
     m, n = [(ss - 1.) / 2. for ss in shape]
@@ -66,8 +67,16 @@ def line_intersection(line1, line2):
 
 
 def is_point_in_image(x, y, input_width=1280, input_height=720):
-    res = False
-    if x and y:
-        res = (x >= 0) and (x <= input_width) and (y >= 0) and (y <= input_height)
-    return res
+    if x is None or y is None:
+        return False
+    return (x >= 0) and (x < input_width) and (y >= 0) and (y < input_height)
 
+
+def choose_device(requested_device='auto'):
+    if requested_device != 'auto':
+        return torch.device(requested_device)
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return torch.device('mps')
+    return torch.device('cpu')

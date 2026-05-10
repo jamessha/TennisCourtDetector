@@ -7,7 +7,7 @@ from utils import draw_umich_gaussian, line_intersection, is_point_in_image
 
 class courtDataset(Dataset):
     
-    def __init__(self, mode, input_height=720, input_width=1280, scale=2, hp_radius=55):
+    def __init__(self, mode, input_height=720, input_width=1280, scale=2, hp_radius=55, data_root='./data'):
 
         self.mode = mode
         assert mode in ['train', 'val'], 'incorrect mode'
@@ -19,7 +19,7 @@ class courtDataset(Dataset):
         self.hp_radius = hp_radius
         self.scale = scale
 
-        self.path_dataset = './data'
+        self.path_dataset = data_root
         self.path_images = os.path.join(self.path_dataset, 'images')
         with open(os.path.join(self.path_dataset, 'data_{}.json'.format(mode)), 'r') as f:
             self.data = json.load(f)
@@ -41,6 +41,8 @@ class courtDataset(Dataset):
         img_name = self.data[index]['id'] + '.png'
         kps = self.data[index]['kps']
         img = cv2.imread(os.path.join(self.path_images, img_name))
+        if img is None:
+            raise FileNotFoundError(os.path.join(self.path_images, img_name))
         img = cv2.resize(img, (self.output_width, self.output_height))
         inp = (img.astype(np.float32) / 255.)
         inp = np.rollaxis(inp, 2, 0)
@@ -49,18 +51,22 @@ class courtDataset(Dataset):
         draw_gaussian = draw_umich_gaussian
 
         for i in range(len(kps)):
-            if kps[i][0] >=0 and kps[i][0] <= self.input_width and kps[i][1] >=0 and kps[i][1] <= self.input_height:
-            # if is_point_in_image(kps[i][0], kps[i][1], self.input_width, self.input_height):
+            if is_point_in_image(kps[i][0], kps[i][1], self.input_width, self.input_height):
                 x_pt_int = int(kps[i][0]/self.scale)
                 y_pt_int = int(kps[i][1]/self.scale)
                 draw_gaussian(hm_hp[i], (x_pt_int, y_pt_int), self.hp_radius)
 
         # draw center point of tennis court
-        x_ct, y_ct = line_intersection((kps[0][0], kps[0][1], kps[3][0], kps[3][1]), (kps[1][0], kps[1][1],
-                                                                                      kps[2][0], kps[2][1]))
-        draw_gaussian(hm_hp[self.num_joints], (int(x_ct/self.scale), int(y_ct/self.scale)), self.hp_radius)
+        center = line_intersection(
+            (kps[0][0], kps[0][1], kps[3][0], kps[3][1]),
+            (kps[1][0], kps[1][1], kps[2][0], kps[2][1]),
+        )
+        if center is not None:
+            x_ct, y_ct = center
+            if is_point_in_image(float(x_ct), float(y_ct), self.input_width, self.input_height):
+                draw_gaussian(hm_hp[self.num_joints], (int(float(x_ct)/self.scale), int(float(y_ct)/self.scale)), self.hp_radius)
         
-        return inp, hm_hp, np.array(kps, dtype=int), img_name[:-4]
+        return inp, hm_hp, np.array(kps, dtype=np.float32), img_name[:-4]
         
         
     def __len__(self):
@@ -68,8 +74,6 @@ class courtDataset(Dataset):
     
     
         
-
-
 
 
 

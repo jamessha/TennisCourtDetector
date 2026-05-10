@@ -1,5 +1,5 @@
-import torch.nn.functional as F
 import numpy as np
+import torch
 
 
 def train(model, train_loader, optimizer, criterion, device, epoch, max_iters=1000):
@@ -10,7 +10,7 @@ def train(model, train_loader, optimizer, criterion, device, epoch, max_iters=10
     for iter_id, batch in enumerate(train_loader):
         out = model(batch[0].float().to(device))
         gt_hm_hp = batch[1].float().to(device)
-        loss = criterion(F.sigmoid(out), gt_hm_hp)
+        loss = criterion(torch.sigmoid(out), gt_hm_hp)
 
         loss.backward()
         optimizer.step()
@@ -21,8 +21,6 @@ def train(model, train_loader, optimizer, criterion, device, epoch, max_iters=10
             break
 
     return np.mean(losses)
-
-
 
 
 

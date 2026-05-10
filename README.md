@@ -58,8 +58,16 @@ You can check these weights https://drive.google.com/file/d/1f-Co64ehgq4uddcQm1a
 ## How to train
 1. Clone the repository `https://github.com/yastrebksv/TennisCourtDetector.git`
 2. Run `pip install -r requirements.txt` to install packages required
-3. Put dataset into `/data` folder
-4. Run `python main.py` to start training
+3. Put dataset into `/data` folder, or pass a dataset root with `--data_root`
+4. Run `python main.py --data_root /path/to/dataset` to start training
+
+For the generated courtside dataset in the sibling `forespin` repo:
+
+```bash
+python main.py --data_root ../forespin/calib_model_data/courtside_data
+```
+
+The training scripts have been updated for modern PyTorch. Device selection defaults to `auto`, which prefers CUDA, then Apple MPS, then CPU. To force a device, pass `--device cpu`, `--device cuda`, or `--device mps`.
 
 ## Infer in video 
 ![](imgs/video_infer.gif) 

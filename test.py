@@ -10,7 +10,7 @@ from dataset import courtDataset
 from tracknet import BallTrackerNet
 import argparse
 import torch
-import torch.nn.functional as F
+from utils import choose_device
 
 if __name__ == '__main__':
 
@@ -19,19 +19,21 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, help='path to model')
     parser.add_argument('--use_refine_kps', action='store_true', help='whether to use refine kps postprocessing')
     parser.add_argument('--use_homography', action='store_true', help='whether to use homography postprocessing')
+    parser.add_argument('--data_root', type=str, default='./data', help='dataset root containing images and data_val.json')
+    parser.add_argument('--device', type=str, default='auto', help='auto, cpu, cuda, mps, or a torch device string')
     args = parser.parse_args()
+    device = choose_device(args.device)
 
-    val_dataset = courtDataset('val')
+    val_dataset = courtDataset('val', data_root=args.data_root)
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=1,
-        pin_memory=True
+        pin_memory=device.type == 'cuda'
     )
 
     model = BallTrackerNet(out_channels=15)
-    device = 'cuda'
     model.load_state_dict(torch.load(args.model_path, map_location=device))
     model = model.to(device)
     model.eval()
@@ -50,7 +52,7 @@ if __name__ == '__main__':
             img_names = batch[3]
             gt_hm = batch[1].float().to(device)
 
-            pred = F.sigmoid(out).detach().cpu().numpy()
+            pred = torch.sigmoid(out).detach().cpu().numpy()
             for bs in range(batch_size):
                 img = cv2.imread(os.path.join(val_dataset.path_dataset, 'images', img_names[bs] + '.png'))
                 points_pred = []

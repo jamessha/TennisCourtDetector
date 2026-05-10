@@ -4,10 +4,10 @@ import torch.nn as nn
 from base_trainer import train
 from base_validator import val
 import os
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from tracknet import BallTrackerNet
 import argparse
-from torch.optim import lr_scheduler
+from utils import choose_device
 
 if __name__ == '__main__':
     
@@ -18,28 +18,32 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
     parser.add_argument('--val_intervals', type=int, default=5, help='number of epochs to run validation')
     parser.add_argument('--steps_per_epoch', type=int, default=1000, help='number of steps per one epoch')
+    parser.add_argument('--data_root', type=str, default='./data', help='dataset root containing images, data_train.json, and data_val.json')
+    parser.add_argument('--num_workers', type=int, default=1, help='DataLoader worker count')
+    parser.add_argument('--device', type=str, default='auto', help='auto, cpu, cuda, mps, or a torch device string')
     args = parser.parse_args()
     
-    train_dataset = courtDataset('train')
+    device = choose_device(args.device)
+
+    train_dataset = courtDataset('train', data_root=args.data_root)
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=1,
-        pin_memory=True
+        num_workers=args.num_workers,
+        pin_memory=device.type == 'cuda'
     )
     
-    val_dataset = courtDataset('val')
+    val_dataset = courtDataset('val', data_root=args.data_root)
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=1,
-        pin_memory=True
+        num_workers=args.num_workers,
+        pin_memory=device.type == 'cuda'
     )
 
     model = BallTrackerNet(out_channels=15)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = model.to(device)
 
     exps_path = './exps/{}'.format(args.exp_id)
@@ -72,6 +76,4 @@ if __name__ == '__main__':
                 val_best_accuracy = accuracy
                 torch.save(model.state_dict(), model_best_path)     
             torch.save(model.state_dict(), model_last_path)
-
-
 
