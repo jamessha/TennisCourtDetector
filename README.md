@@ -1,8 +1,10 @@
+> **Forespin fork note**
+>
+> This fork has been updated to work with modern Python/PyTorch dependencies. For Forespin, the dataset should be augmented toward an amateur elevated-baseline phone view rather than the original professional broadcast view. Forespin-compatible court detector weights are available on [Google Drive](https://drive.google.com/file/d/1xLwRbsWz8blh7cFF9eZl3LJZb8p0VrC3/view?usp=sharing).
+
+---
+
 # TennisCourtDetector
-
-## Forespin Fork Note
-
-This fork has been updated to work with modern Python/PyTorch dependencies. For Forespin, the dataset should be augmented toward an amateur elevated-baseline phone view rather than the original professional broadcast view. Forespin-compatible court detector weights are available on [Google Drive](https://drive.google.com/file/d/1xLwRbsWz8blh7cFF9eZl3LJZb8p0VrC3/view?usp=sharing).
 
 Deep learning network for detecting tennis court
 
